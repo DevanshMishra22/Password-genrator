@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Generator</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <!-- Add iziToast CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: #3b3b98;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden;
+        padding: 10px;
+      }
+      h2 {
+        margin: 10px 0 20px;
+        text-align: center;
+      }
+      .container {
+        background-color: #23235b;
+        box-shadow: 0px 2px 10px rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        width: 350px;
+        max-width: 100%;
+      }
+      .result-container {
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        position: relative;
+        font-size: 12px;
+        letter-spacing: 2px;
+        padding: 12px 10px;
+        height: 50px;
+        width: 100%;
+      }
+      .result-container #result {
+        word-wrap: break-word;
+        max-width: calc(100% - 40px);
+      }
+      .result-container .btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+      .btn {
+        border: none;
+        background-color: #3b3b98;
+        color: #fff;
+        font-size: 16px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      .large-btn {
+        display: block;
+        width: 100%;
+      }
+      .setting {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0px;
+      }
+      .settings {
+        margin: 20px 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Password Generator</h2>
+      <div class="result-container">
+        <span id="result"></span>
+        <button class="btn" id="clipboard">
+          <i class="far fa-clipboard"></i>
+        </button>
+      </div>
+      <div class="settings">
+        <div class="setting">
+          <label>Password Length</label>
+          <input type="number" id="length" min="4" max="20" value="20" />
+        </div>
+        <div class="setting">
+          <label>Include lowercase</label>
+          <input type="checkbox" id="lowercase" checked />
+        </div>
+        <div class="setting">
+          <label>Include Uppercase</label>
+          <input type="checkbox" id="uppercase" checked />
+        </div>
+        <div class="setting">
+          <label>Include Symbols</label>
+          <input type="checkbox" id="symbol" checked />
+        </div>
+        <div class="setting">
+          <label>Include Numbers</label>
+          <input type="checkbox" id="number" checked />
+        </div>
+      </div>
+      <button class="btn large-btn" id="generate">Generate Password</button>
+    </div>
+
+    <!-- Add iziToast JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
+    <script>
+      const resultEl = document.getElementById("result");
+      const lengthEl = document.getElementById("length");
+      const lowercaseEl = document.getElementById("lowercase");
+      const uppercaseEl = document.getElementById("uppercase");
+      const symbolEl = document.getElementById("symbol");
+      const numberEl = document.getElementById("number");
+      const clipboardEl = document.getElementById("clipboard");
+      const generateEl = document.getElementById("generate");
+
+      const randomFunc = {
+        lower: getRandomLowerCase,
+        upper: getRandomUppercase,
+        symbol: getRandomSymbol,
+        number: getRandomNumber,
+      };
+
+      generateEl.addEventListener("click", () => {
+        const length = +lengthEl.value;
+        const hasLower = lowercaseEl.checked;
+        const hasUpper = uppercaseEl.checked;
+        const hasSymbol = symbolEl.checked;
+        const hasNumber = numberEl.checked;
+
+        resultEl.innerText = generatePassword(
+          hasLower,
+          hasUpper,
+          hasNumber,
+          hasSymbol,
+          length
+        );
+      });
+
+      clipboardEl.addEventListener("click", () => {
+        const password = resultEl.innerText;
+        if (!password) return;
+        navigator.clipboard.writeText(password).then(() => {
+          // Show success toast
+          iziToast.success({
+            title: "Success",
+            message: "Password copied to clipboard!",
+            position: "topCenter",
+          });
+        });
+      });
+
+      function generatePassword(lower, upper, number, symbol, length) {
+        let generatedPassword = "";
+        const typesCount = lower + upper + number + symbol;
+        const typesArr = [{ lower }, { upper }, { number }, { symbol }].filter(
+          (item) => Object.values(item)[0]
+        );
+
+        if (typesCount === 0) {
+          iziToast.warning({
+            title: "Warning",
+            message: "Please select at least one character type!",
+            position: "topCenter",
+          });
+          return "";
+        }
+
+        for (let i = 0; i < length; i++) {
+          const randomType =
+            typesArr[Math.floor(Math.random() * typesArr.length)];
+          generatedPassword += randomFunc[Object.keys(randomType)[0]]();
+        }
+
+        return generatedPassword;
+      }
+
+      function getRandomLowerCase() {
+        return String.fromCharCode(Math.floor(Math.random() * 26) + 97);
+      }
+
+      function getRandomUppercase() {
+        return String.fromCharCode(Math.floor(Math.random() * 26) + 65);
+      }
+
+      function getRandomNumber() {
+        return String.fromCharCode(Math.floor(Math.random() * 10) + 48);
+      }
+
+      function getRandomSymbol() {
+        const symbols = "!@#$%^&*()_[]{};'.,/=<>";
+        return symbols[Math.floor(Math.random() * symbols.length)];
+      }
+      const fruits = ["Banana", "Orange", "Apple", "Mango"];
+      const keys = Object.keys(fruits);
+      console.log(keys);
+    </script>
+  </body>
+</html>
